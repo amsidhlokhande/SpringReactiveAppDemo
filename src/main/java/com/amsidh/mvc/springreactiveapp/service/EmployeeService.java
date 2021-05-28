@@ -15,5 +15,5 @@ public interface EmployeeService {
 
     void deleteEmployee(UUID id);
 
-    List<EmployeeVO> getEmployees();
+    List<EmployeeVO> getEmployees(Integer pageNo, Integer pageSize, String sortBy);
 }

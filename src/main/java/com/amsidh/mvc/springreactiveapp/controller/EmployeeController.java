@@ -16,8 +16,10 @@ public class EmployeeController {
     private final EmployeeService employeeService;
 
     @GetMapping
-    public List<EmployeeVO> findAllEmployees() {
-        return employeeService.getEmployees();
+    public List<EmployeeVO> findAllEmployees(@RequestParam(defaultValue = "0") Integer pageNo,
+                                             @RequestParam(defaultValue = "10") Integer pageSize,
+                                             @RequestParam(defaultValue = "id") String sortBy) {
+        return employeeService.getEmployees(pageNo,pageSize,sortBy);
     }
 
     @GetMapping("/{employeeId}")
