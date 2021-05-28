@@ -1,19 +1,21 @@
 package com.amsidh.mvc.springreactiveapp.service;
 
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface EmployeeService {
 
-    EmployeeVO createEmployee(EmployeeVO employeeVO);
+    Mono<EmployeeVO> createEmployee(EmployeeVO employeeVO);
 
-    EmployeeVO getEmployee(UUID id);
+    Mono<EmployeeVO> getEmployee(UUID id);
 
-    EmployeeVO updateEmployee(UUID id, EmployeeVO employeeVO);
+    Mono<EmployeeVO> updateEmployee(UUID id, EmployeeVO employeeVO);
 
-    void deleteEmployee(UUID id);
+    Mono<Void> deleteEmployee(UUID id);
 
-    List<EmployeeVO> getEmployees(Integer pageNo, Integer pageSize, String sortBy);
+    Flux<EmployeeVO> getEmployees(Integer pageNo, Integer pageSize, String sortBy);
 }
