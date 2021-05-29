@@ -21,9 +21,13 @@ public class AppConfig {
     public ConnectionFactoryInitializer getConnectionFactoryInitializer(ConnectionFactory connectionFactory) {
         ConnectionFactoryInitializer connectionFactoryInitializer = new ConnectionFactoryInitializer();
         connectionFactoryInitializer.setConnectionFactory(connectionFactory);
-        connectionFactoryInitializer.setDatabasePopulator(new ResourceDatabasePopulator(new ClassPathResource("schema.sql")));
+
+
+        connectionFactoryInitializer.setDatabasePopulator(
+                new ResourceDatabasePopulator(new ClassPathResource("schema.sql"),
+                        new ClassPathResource("data.sql")));
+
         return connectionFactoryInitializer;
     }
-
 
 }

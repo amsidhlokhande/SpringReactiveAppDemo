@@ -43,7 +43,7 @@ public class DataLoader implements CommandLineRunner {
         // fetch Employees by last name
         log.info("Employees found with findByName('Amsidh Lokhande100'):");
         log.info("--------------------------------------------");
-        employeeRepository.findByName("Amsidh Lokhande100").doOnNext(amsidh -> log.info(amsidh.toString())).blockLast(Duration.ofSeconds(10));
+        employeeRepository.findByName("Test User1").doOnNext(amsidh -> log.info(amsidh.toString())).blockLast(Duration.ofSeconds(10));
 
         log.info("");
     }
@@ -51,7 +51,7 @@ public class DataLoader implements CommandLineRunner {
     private List<Employee> getInitialEmployeeData() {
         List<Employee> employeeList = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            employeeList.add(new Employee("Amsidh Lokhande" + i, "amsidhlokhande@gmail.com" + i));
+            employeeList.add(new Employee("Test User" + i, "testuser@gmail.com" + i));
         }
         return employeeList;
     }
