@@ -3,30 +3,54 @@ package com.amsidh.mvc.springreactiveapp.loader;
 import com.amsidh.mvc.springreactiveapp.entity.Employee;
 import com.amsidh.mvc.springreactiveapp.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
-import java.util.*;
-import java.util.stream.StreamSupport;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Component
+@Slf4j
 public class DataLoader implements CommandLineRunner {
     private final EmployeeRepository employeeRepository;
 
     @Override
     public void run(String... args) {
 
-        if (StreamSupport.stream(employeeRepository.findAll().spliterator(), true).count() == 0) {
-            employeeRepository.saveAll(getInitialEmployeeData())
-                    .forEach(System.out::println);
-        }
+        // save a few customers
+        employeeRepository.saveAll(getInitialEmployeeData())
+                .blockLast(Duration.ofSeconds(10));
+
+        // fetch all Employees
+        log.info("Employees found with findAll():");
+        log.info("-------------------------------");
+        employeeRepository.findAll().doOnNext(employee -> log.info(employee.toString())).blockLast(Duration.ofSeconds(10));
+
+        log.info("");
+
+        // fetch an individual customer by ID
+        employeeRepository.findById(1L).doOnNext(employee -> {
+            log.info("Employee found with findById(1L):");
+            log.info("--------------------------------");
+            log.info(employee.toString());
+            log.info("");
+        }).block(Duration.ofSeconds(10));
+
+
+        // fetch Employees by last name
+        log.info("Employees found with findByName('Amsidh Lokhande100'):");
+        log.info("--------------------------------------------");
+        employeeRepository.findByName("Amsidh Lokhande100").doOnNext(amsidh -> log.info(amsidh.toString())).blockLast(Duration.ofSeconds(10));
+
+        log.info("");
     }
 
     private List<Employee> getInitialEmployeeData() {
         List<Employee> employeeList = new ArrayList<>();
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < 10; i++) {
             employeeList.add(new Employee("Amsidh Lokhande" + i, "amsidhlokhande@gmail.com" + i));
         }
         return employeeList;

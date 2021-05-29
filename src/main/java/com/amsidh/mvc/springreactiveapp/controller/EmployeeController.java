@@ -3,45 +3,41 @@ package com.amsidh.mvc.springreactiveapp.controller;
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 @RequiredArgsConstructor
+@Slf4j
 @RestController
 @RequestMapping("/employees")
 public class EmployeeController {
     private final EmployeeService employeeService;
 
     @GetMapping
-    public ResponseEntity<Flux<EmployeeVO>> findAllEmployees(@RequestParam(defaultValue = "0") Integer pageNo,
-                                                             @RequestParam(defaultValue = "10") Integer pageSize,
-                                                             @RequestParam(defaultValue = "id") String sortBy) {
-        return ResponseEntity.ok(employeeService.getEmployees(pageNo, pageSize, sortBy));
+    public Flux<EmployeeVO> findAllEmployees() {
+        return employeeService.getEmployees();
     }
 
     @GetMapping("/{employeeId}")
-    public ResponseEntity<Mono<EmployeeVO>> findEmployeeById(@PathVariable("employeeId") UUID employeeId) {
-        return ResponseEntity.ok(employeeService.getEmployee(employeeId));
+    public Mono<EmployeeVO> findEmployeeById(@PathVariable("employeeId") Long employeeId) {
+        return employeeService.getEmployee(employeeId);
     }
 
     @PostMapping
-    public ResponseEntity<Mono<EmployeeVO>> saveEmployee(@RequestBody EmployeeVO employeeVO) {
-        return ResponseEntity.ok(employeeService.createEmployee(employeeVO));
+    public Mono<EmployeeVO> saveEmployee(@RequestBody EmployeeVO employeeVO) {
+        return employeeService.createEmployee(employeeVO);
     }
 
     @PutMapping("/{employeeId}")
-    public ResponseEntity<Mono<EmployeeVO>> updateEmployeeById(@PathVariable("employeeId") UUID employeeId, @RequestBody EmployeeVO employeeVO) {
-        return ResponseEntity.ok(employeeService.updateEmployee(employeeId, employeeVO));
+    public Mono<EmployeeVO> updateEmployeeById(@PathVariable("employeeId") Long employeeId, @RequestBody Mono<EmployeeVO> monoEmployeeVO) {
+        return employeeService.updateEmployee(employeeId, monoEmployeeVO);
     }
 
     @DeleteMapping("/{employeeId}")
-    public ResponseEntity<Mono<Void>> deleteEmployeeById(@PathVariable("employeeId") UUID employeeId) {
-        employeeService.deleteEmployee(employeeId);
-        return ResponseEntity.noContent().build();
+    public Mono<Void> deleteEmployeeById(@PathVariable("employeeId") Long employeeId) {
+        return employeeService.deleteEmployee(employeeId);
     }
 
 }

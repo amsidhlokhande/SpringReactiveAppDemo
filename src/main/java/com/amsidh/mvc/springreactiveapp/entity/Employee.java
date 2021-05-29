@@ -1,37 +1,42 @@
 package com.amsidh.mvc.springreactiveapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import java.util.UUID;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Entity
-public class Employee {
+public class Employee implements Persistable<Long> {
 
     @Id
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @GeneratedValue(generator = "UUID")
-    @Type(type = "org.hibernate.type.UUIDCharType")
-    @Column(length = 36, nullable = false, updatable = false, columnDefinition = "varchar")
-    private UUID id;
-
+    private Long id;
     private String name;
     private String email;
+
+    @Transient
+    @JsonIgnore
+    private boolean newEmployee;
 
     public Employee(String name, String email) {
         this.name = name;
         this.email = email;
     }
+
+    @Override
+    public boolean isNew() {
+        return this.newEmployee || this.id == null;
+    }
+
+    public Employee setAsNew() {
+        this.newEmployee = true;
+        return this;
+    }
+
 }
