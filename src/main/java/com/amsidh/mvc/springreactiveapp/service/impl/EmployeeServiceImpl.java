@@ -24,8 +24,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Mono<EmployeeVO> createEmployee(EmployeeVO employeeVO) {
-        return employeeRepository.save(objectMapper.convertValue(employeeVO, Employee.class))
-                .map(employee -> objectMapper.convertValue(employee, EmployeeVO.class));
+        Employee employee = Optional.ofNullable(employeeVO)
+                .map(empVo -> Employee.builder().name(empVo.getName()).email(empVo.getEmail()).build()).get();
+        return employeeRepository.save(employee)
+                .map(emp -> objectMapper.convertValue(emp, EmployeeVO.class));
     }
 
     @Override
