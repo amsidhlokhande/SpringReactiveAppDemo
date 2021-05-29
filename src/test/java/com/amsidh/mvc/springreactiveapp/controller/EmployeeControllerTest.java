@@ -3,7 +3,6 @@ package com.amsidh.mvc.springreactiveapp.controller;
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.Base64Utils;
@@ -43,9 +41,7 @@ public class EmployeeControllerTest {
                         .encodeToString(("user" + ":" + "password").getBytes(StandardCharsets.UTF_8)))
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(EmployeeVO.class).value(employeeVO1 -> {
-            Assertions.assertEquals(employeeVO.getEmail(), employeeVO.getEmail());
-        });
+                .expectBody(EmployeeVO.class).value(employeeVO1 -> Assertions.assertEquals(employeeVO.getEmail(), employeeVO.getEmail()));
 
         Mockito.verify(employeeService, Mockito.times(1)).getEmployee(ArgumentMatchers.any(UUID.class));
 
