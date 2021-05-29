@@ -603,3 +603,14 @@ CREATE TABLE IF NOT EXISTS EMPLOYEE
 </project>
 
 ```
+
+
+## Swagger API Urls:
+Swagger-> http://localhost:8181/webjars/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config#/employee-controller/findEmployeeById
+
+## GET ALL Employees
+http://localhost:8181/employees
+#GET EMPLOYEE BY ID
+http://localhost:8181/employees/37ce2e97-5fd0-4def-a946-ae1398c4d6de
+## ACTUATOR
+http://localhost:8181/actuator
