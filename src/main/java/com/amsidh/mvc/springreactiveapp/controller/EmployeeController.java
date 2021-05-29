@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 @RequiredArgsConstructor
 @Slf4j
 @RestController
@@ -21,7 +23,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/{employeeId}")
-    public Mono<EmployeeVO> findEmployeeById(@PathVariable("employeeId") Long employeeId) {
+    public Mono<EmployeeVO> findEmployeeById(@PathVariable("employeeId") UUID employeeId) {
         return employeeService.getEmployee(employeeId);
     }
 
@@ -31,12 +33,12 @@ public class EmployeeController {
     }
 
     @PutMapping("/{employeeId}")
-    public Mono<EmployeeVO> updateEmployeeById(@PathVariable("employeeId") Long employeeId, @RequestBody Mono<EmployeeVO> monoEmployeeVO) {
+    public Mono<EmployeeVO> updateEmployeeById(@PathVariable("employeeId") UUID employeeId, @RequestBody Mono<EmployeeVO> monoEmployeeVO) {
         return employeeService.updateEmployee(employeeId, monoEmployeeVO);
     }
 
     @DeleteMapping("/{employeeId}")
-    public Mono<Void> deleteEmployeeById(@PathVariable("employeeId") Long employeeId) {
+    public Mono<Void> deleteEmployeeById(@PathVariable("employeeId") UUID employeeId) {
         return employeeService.deleteEmployee(employeeId);
     }
 

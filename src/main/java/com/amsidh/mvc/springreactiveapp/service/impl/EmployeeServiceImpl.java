@@ -13,6 +13,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -31,12 +32,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Mono<EmployeeVO> getEmployee(Long id) {
+    public Mono<EmployeeVO> getEmployee(UUID id) {
         return employeeRepository.findById(id).map(employee -> objectMapper.convertValue(employee, EmployeeVO.class));
     }
 
     @Override
-    public Mono<EmployeeVO> updateEmployee(Long id, Mono<EmployeeVO> monoEmployeeVO) {
+    public Mono<EmployeeVO> updateEmployee(UUID id, Mono<EmployeeVO> monoEmployeeVO) {
         return this.employeeRepository.findById(id)
                 .flatMap(employee -> monoEmployeeVO.map(inputEmployee -> {
                     Optional.ofNullable(inputEmployee.getName()).ifPresent(employee::setName);
@@ -48,7 +49,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Mono<Void> deleteEmployee(Long id) {
+    public Mono<Void> deleteEmployee(UUID id) {
         return employeeRepository.deleteById(id);
     }
 

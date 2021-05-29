@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -13,7 +15,7 @@ import org.springframework.data.annotation.Id;
 public class Employee {
 
     @Id
-    private Long id;
+    private UUID id;
     private String name;
     private String email;
 

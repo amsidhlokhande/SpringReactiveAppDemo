@@ -31,15 +31,6 @@ public class DataLoader implements CommandLineRunner {
 
         log.info("");
 
-        // fetch an individual customer by ID
-        employeeRepository.findById(1L).doOnNext(employee -> {
-            log.info("Employee found with findById(1L):");
-            log.info("--------------------------------");
-            log.info(employee.toString());
-            log.info("");
-        }).block(Duration.ofSeconds(10));
-
-
         // fetch Employees by last name
         log.info("Employees found with findByName('Amsidh Lokhande100'):");
         log.info("--------------------------------------------");
