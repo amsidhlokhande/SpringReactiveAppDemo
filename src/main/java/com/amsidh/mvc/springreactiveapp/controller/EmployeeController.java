@@ -1,9 +1,11 @@
 package com.amsidh.mvc.springreactiveapp.controller;
 
+import com.amsidh.mvc.springreactiveapp.model.EmployeePageList;
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,4 +44,10 @@ public class EmployeeController {
         return employeeService.deleteEmployee(employeeId);
     }
 
+
+    //Pagination List<EmployeeVO>
+    @GetMapping("/pagination/{name}/{email}")
+    public Mono<EmployeePageList> getEmployeePaging(@PathVariable("name") String name, @PathVariable("email") String email, @RequestParam(value = "pageNumber", defaultValue = "1") Integer pageNumber, @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
+        return employeeService.getEmployeePaging(name, email, PageRequest.of(pageNumber, pageSize));
+    }
 }

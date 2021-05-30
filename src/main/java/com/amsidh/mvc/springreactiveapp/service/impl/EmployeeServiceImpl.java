@@ -1,19 +1,29 @@
 package com.amsidh.mvc.springreactiveapp.service.impl;
 
 import com.amsidh.mvc.springreactiveapp.entity.Employee;
+import com.amsidh.mvc.springreactiveapp.model.EmployeePageList;
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.repository.EmployeeRepository;
 import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.empty;
+import static org.springframework.data.relational.core.query.Query.query;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -21,6 +31,7 @@ import java.util.UUID;
 @Transactional
 public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
+    private final R2dbcEntityTemplate r2dbcEntityTemplate;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -56,6 +67,27 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public Flux<EmployeeVO> getEmployees() {
         return employeeRepository.findAll().map(employee -> objectMapper.convertValue(employee, EmployeeVO.class));
+    }
+
+    @Override
+    public Mono<EmployeePageList> getEmployeePaging(String name, String email, PageRequest pageRequest) {
+        Query query = null;
+        if (StringUtils.hasText(name) && StringUtils.hasText(email)) {
+            query = query(where("name").is(name).and("email").is(email));
+        } else if (StringUtils.hasText(name) && !StringUtils.hasText(email)) {
+            query = query(where("name").is(name));
+        } else if (!StringUtils.hasText(name) && StringUtils.hasText(email)) {
+            query = query(where("email").is(email));
+        } else {
+            query = empty();
+        }
+
+        return r2dbcEntityTemplate.select(Employee.class).matching(query.with(pageRequest)).all()
+                .map(employee -> objectMapper.convertValue(employee, EmployeeVO.class))
+                .collect(Collectors.toList())
+                .map(employeeVOS -> new EmployeePageList(employeeVOS, PageRequest.of(pageRequest.getPageNumber(), pageRequest.getPageSize()), employeeVOS.size()));
 
     }
+
+
 }

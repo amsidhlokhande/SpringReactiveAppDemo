@@ -2,6 +2,7 @@ package com.amsidh.mvc.springreactiveapp.controller;
 
 import com.amsidh.mvc.springreactiveapp.exception.BadRequestException;
 import com.amsidh.mvc.springreactiveapp.exception.EmployeeNotFoundException;
+import com.amsidh.mvc.springreactiveapp.model.EmployeePageList;
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
 import org.junit.jupiter.api.Assertions;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.Base64Utils;
@@ -22,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -148,7 +151,7 @@ public class EmployeeControllerTest {
         EmployeeVO requestEmployeeVO = EmployeeVO.builder().id(uuid).name("Amsidh Lokhande").email("amsidh@gmail.com").build();
         EmployeeVO responseEmployeeVO = EmployeeVO.builder().id(uuid).name("Amsidh Lokhande Updated").email("amsidh-updated@gmail.com").build();
 
-        Mockito.when(employeeService.updateEmployee(ArgumentMatchers.any(UUID.class),ArgumentMatchers.any(Mono.class))).thenReturn(Mono.just(responseEmployeeVO));
+        Mockito.when(employeeService.updateEmployee(ArgumentMatchers.any(UUID.class), ArgumentMatchers.any(Mono.class))).thenReturn(Mono.just(responseEmployeeVO));
         //CSRF Token has been associated to this client. So using webClient.mutateWith(csrf())
         webClient.mutateWith(csrf()).put().uri("/employees/{employeeId}", uuid)
                 .header("Authorization", "Basic " + Base64Utils
@@ -156,11 +159,46 @@ public class EmployeeControllerTest {
                 .body(BodyInserters.fromValue(requestEmployeeVO))
                 .exchange()
                 .expectStatus().isOk().expectBody(EmployeeVO.class)
-        .value(empVO->{
-            Assertions.assertEquals(empVO.getEmail(),responseEmployeeVO.getEmail());
-            Assertions.assertEquals(empVO.getName(),responseEmployeeVO.getName());
-        });
-        Mockito.verify(employeeService, Mockito.times(1)).updateEmployee(ArgumentMatchers.any(UUID.class),ArgumentMatchers.any(Mono.class));
+                .value(empVO -> {
+                    Assertions.assertEquals(empVO.getEmail(), responseEmployeeVO.getEmail());
+                    Assertions.assertEquals(empVO.getName(), responseEmployeeVO.getName());
+                });
+        Mockito.verify(employeeService, Mockito.times(1)).updateEmployee(ArgumentMatchers.any(UUID.class), ArgumentMatchers.any(Mono.class));
     }
 
+    @Test
+    public void testGetEmployeePaging() {
+        List<EmployeeVO> employeeVOList = getEmployeeVOS();
+        int pageNumber = 1;
+        Integer pageSize = 10;
+        String name = "Amsidh Lokhande";
+        String email = "amsidh@gmail.com";
+        Mockito.when(employeeService.getEmployeePaging(ArgumentMatchers.any(String.class), ArgumentMatchers.any(String.class), ArgumentMatchers.any(PageRequest.class)))
+                .thenReturn(Mono.just(new EmployeePageList(employeeVOList, PageRequest.of(pageNumber, pageSize), employeeVOList.size())));
+        //CSRF Token has been associated to this client. So using webClient.mutateWith(csrf())
+        webClient.mutateWith(csrf()).get().uri("/employees/pagination/{email}/{email}", name, email)
+                .header("Authorization", "Basic " + Base64Utils
+                        .encodeToString(("user" + ":" + "password").getBytes(StandardCharsets.UTF_8)))
+                .exchange()
+                .expectStatus().isOk().expectBody(EmployeePageList.class)
+                .value(employeePageList -> Assertions.assertFalse(employeePageList.isEmpty()));
+        Mockito.verify(employeeService, Mockito.times(1)).getEmployeePaging(ArgumentMatchers.any(String.class), ArgumentMatchers.any(String.class), ArgumentMatchers.any(PageRequest.class));
+    }
+
+    private List<EmployeeVO> getEmployeeVOS() {
+        List<EmployeeVO> employeeVOList = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            if (i < 30) {
+                employeeVOList.add(EmployeeVO.builder().id(UUID.randomUUID()).name("Amsidh Lokhande").email("amsidh@gmail.com").build());
+            } else if (30 < i && i < 50) {
+                employeeVOList.add(EmployeeVO.builder().id(UUID.randomUUID()).name("Anjali Lokhande").email("anjali@gmail.com").build());
+            } else if (50 < i && i < 70) {
+                employeeVOList.add(EmployeeVO.builder().id(UUID.randomUUID()).name("Adithi Lokhande").email("adithi@gmail.com").build());
+            } else {
+                employeeVOList.add(EmployeeVO.builder().id(UUID.randomUUID()).name("Aditya Lokhande").email("aditya@gmail.com").build());
+            }
+
+        }
+        return employeeVOList;
+    }
 }
