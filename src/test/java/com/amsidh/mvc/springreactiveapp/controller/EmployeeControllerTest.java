@@ -24,10 +24,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 
@@ -167,22 +165,59 @@ public class EmployeeControllerTest {
     }
 
     @Test
-    public void testGetEmployeePaging() {
+    public void testGetEmployeePagingWithPageNUmber1AndPageSize10() {
         List<EmployeeVO> employeeVOList = getEmployeeVOS();
         int pageNumber = 1;
         Integer pageSize = 10;
-        String name = "Amsidh Lokhande";
-        String email = "amsidh@gmail.com";
-        Mockito.when(employeeService.getEmployeePaging(ArgumentMatchers.any(String.class), ArgumentMatchers.any(String.class), ArgumentMatchers.any(PageRequest.class)))
-                .thenReturn(Mono.just(new EmployeePageList(employeeVOList, PageRequest.of(pageNumber, pageSize), employeeVOList.size())));
+        EmployeePageList employeeVOS = new EmployeePageList(employeeVOList, PageRequest.of(pageNumber, pageSize), employeeVOList.size());
+        Mockito.when(employeeService.getEmployeePaging(
+                ArgumentMatchers.any(String.class),
+                ArgumentMatchers.any(String.class),
+                ArgumentMatchers.any(PageRequest.class)))
+                .thenReturn(Mono.just(employeeVOS));
+
         //CSRF Token has been associated to this client. So using webClient.mutateWith(csrf())
-        webClient.mutateWith(csrf()).get().uri("/employees/pagination/{email}/{email}", name, email)
+        webClient.get().uri("/employees/pagination")
                 .header("Authorization", "Basic " + Base64Utils
                         .encodeToString(("user" + ":" + "password").getBytes(StandardCharsets.UTF_8)))
                 .exchange()
                 .expectStatus().isOk().expectBody(EmployeePageList.class)
-                .value(employeePageList -> Assertions.assertFalse(employeePageList.isEmpty()));
-        Mockito.verify(employeeService, Mockito.times(1)).getEmployeePaging(ArgumentMatchers.any(String.class), ArgumentMatchers.any(String.class), ArgumentMatchers.any(PageRequest.class));
+                .value(employeePageList -> Optional.ofNullable(employeePageList).ifPresent(empList -> Assertions.assertFalse(empList.isEmpty())));
+        Mockito.verify(employeeService, Mockito.times(1))
+                .getEmployeePaging(ArgumentMatchers.any(String.class), ArgumentMatchers.any(String.class), ArgumentMatchers.any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetEmployeePagingWithEmailRequestParam() {
+        List<EmployeeVO> employeeVOList = getEmployeeVOS();
+        int pageNumber = 1;
+        Integer pageSize = 10;
+        String email = "amsidh@gmail.com";
+        EmployeePageList employeeVOS = new EmployeePageList(employeeVOList.stream()
+                .filter(employeeVO -> employeeVO.getEmail().equalsIgnoreCase(email))
+                .collect(Collectors.toList()),
+                PageRequest.of(pageNumber, pageSize),
+                employeeVOList.size());
+
+        Mockito.when(employeeService.getEmployeePaging(
+                ArgumentMatchers.any(String.class),
+                ArgumentMatchers.any(String.class),
+                ArgumentMatchers.any(PageRequest.class)))
+                .thenReturn(Mono.just(employeeVOS));
+
+        //CSRF Token has been associated to this client. So using webClient.mutateWith(csrf())
+        webClient.get().uri("/employees/pagination")
+                .header("Authorization", "Basic " + Base64Utils
+                        .encodeToString(("user" + ":" + "password").getBytes(StandardCharsets.UTF_8)))
+                .attribute("email", email)
+                .exchange()
+                .expectStatus().isOk().expectBody(EmployeePageList.class)
+                .value(employeePageList -> Optional.ofNullable(employeePageList).ifPresent(empList -> {
+                    Assertions.assertFalse(empList.isEmpty());
+                    empList.forEach(employeeVO -> Assertions.assertTrue(employeeVO.getEmail().equalsIgnoreCase(email)));
+                }));
+        Mockito.verify(employeeService, Mockito.times(1))
+                .getEmployeePaging(ArgumentMatchers.any(String.class), ArgumentMatchers.any(String.class), ArgumentMatchers.any(PageRequest.class));
     }
 
     private List<EmployeeVO> getEmployeeVOS() {

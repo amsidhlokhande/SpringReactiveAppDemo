@@ -46,8 +46,12 @@ public class EmployeeController {
 
 
     //Pagination List<EmployeeVO>
-    @GetMapping("/pagination/{name}/{email}")
-    public Mono<EmployeePageList> getEmployeePaging(@PathVariable("name") String name, @PathVariable("email") String email, @RequestParam(value = "pageNumber", defaultValue = "1") Integer pageNumber, @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
-        return employeeService.getEmployeePaging(name, email, PageRequest.of(pageNumber, pageSize));
+    @GetMapping("/pagination")
+    public Mono<EmployeePageList> getEmployeePaging(@RequestParam(value = "name", required = false, defaultValue = "") String name,
+                                                    @RequestParam(value = "email", required = false, defaultValue = "") String email,
+                                                    @RequestParam(value = "pageNumber", defaultValue = "1") Integer pageNumber,
+                                                    @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
+        Mono<EmployeePageList> employeePaging = employeeService.getEmployeePaging(name, email, PageRequest.of(pageNumber, pageSize));
+        return employeePaging;
     }
 }
