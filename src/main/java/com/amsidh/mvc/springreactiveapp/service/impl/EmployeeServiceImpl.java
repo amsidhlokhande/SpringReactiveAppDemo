@@ -1,6 +1,7 @@
 package com.amsidh.mvc.springreactiveapp.service.impl;
 
 import com.amsidh.mvc.springreactiveapp.entity.Employee;
+import com.amsidh.mvc.springreactiveapp.exception.BadRequestException;
 import com.amsidh.mvc.springreactiveapp.model.EmployeePageList;
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.repository.EmployeeRepository;
@@ -37,7 +38,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public Mono<EmployeeVO> createEmployee(EmployeeVO employeeVO) {
         Employee employee = Optional.ofNullable(employeeVO)
-                .map(empVo -> Employee.builder().name(empVo.getName()).email(empVo.getEmail()).build()).get();
+                .map(empVo -> Employee.builder().name(empVo.getName()).email(empVo.getEmail()).build()).orElseThrow(() -> new BadRequestException("Employee is empty or null"));
         return employeeRepository.save(employee)
                 .map(emp -> objectMapper.convertValue(emp, EmployeeVO.class));
     }
