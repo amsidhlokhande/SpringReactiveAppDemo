@@ -1,5 +1,6 @@
 package com.amsidh.mvc.springreactiveapp.controller;
 
+import com.amsidh.mvc.springreactiveapp.exception.BadRequestException;
 import com.amsidh.mvc.springreactiveapp.exception.EmployeeNotFoundException;
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
@@ -100,6 +101,66 @@ public class EmployeeControllerTest {
                 .expectBody(EmployeeVO.class)
                 .value(empVo -> Assertions.assertEquals(empVo.getName(), employeeVO.getName()));
         Mockito.verify(employeeService, Mockito.times(1)).createEmployee(ArgumentMatchers.any(EmployeeVO.class));
+    }
+
+    @Test
+    public void testPostEmployeeBadRequest() {
+        Mockito.when(employeeService.createEmployee(ArgumentMatchers.any(EmployeeVO.class))).thenThrow(new BadRequestException("Bad Request"));
+        //CSRF Token has been associated to this client. So using webClient.mutateWith(csrf())
+        webClient.mutateWith(csrf()).post().uri("/employees")
+                .header("Authorization", "Basic " + Base64Utils
+                        .encodeToString(("user" + ":" + "password").getBytes(StandardCharsets.UTF_8)))
+                .body(BodyInserters.fromValue(EmployeeVO.builder().name("Amsidh Lokhande").email("amsidh@gmail.com").build()))
+                .exchange()
+                .expectStatus().isBadRequest();
+        Mockito.verify(employeeService, Mockito.times(1)).createEmployee(ArgumentMatchers.any(EmployeeVO.class));
+    }
+
+    @Test
+    public void testDeleteEmployee() {
+        UUID uuid = UUID.randomUUID();
+        Mockito.when(employeeService.deleteEmployee(ArgumentMatchers.any(UUID.class))).thenReturn(Mono.empty());
+        //CSRF Token has been associated to this client. So using webClient.mutateWith(csrf())
+        webClient.mutateWith(csrf()).delete().uri("/employees/{employeeId}", uuid)
+                .header("Authorization", "Basic " + Base64Utils
+                        .encodeToString(("user" + ":" + "password").getBytes(StandardCharsets.UTF_8)))
+                .exchange()
+                .expectStatus().isOk();
+        Mockito.verify(employeeService, Mockito.times(1)).deleteEmployee(ArgumentMatchers.any(UUID.class));
+    }
+
+    @Test
+    public void testDeleteEmployeeNotFound() {
+        UUID uuid = UUID.randomUUID();
+        Mockito.when(employeeService.deleteEmployee(ArgumentMatchers.any(UUID.class))).thenThrow(new EmployeeNotFoundException(uuid));
+        //CSRF Token has been associated to this client. So using webClient.mutateWith(csrf())
+        webClient.mutateWith(csrf()).delete().uri("/employees/{employeeId}", uuid)
+                .header("Authorization", "Basic " + Base64Utils
+                        .encodeToString(("user" + ":" + "password").getBytes(StandardCharsets.UTF_8)))
+                .exchange()
+                .expectStatus().isNotFound();
+        Mockito.verify(employeeService, Mockito.times(1)).deleteEmployee(ArgumentMatchers.any(UUID.class));
+    }
+
+    @Test
+    public void testUpdateEmployee() {
+        UUID uuid = UUID.randomUUID();
+        EmployeeVO requestEmployeeVO = EmployeeVO.builder().id(uuid).name("Amsidh Lokhande").email("amsidh@gmail.com").build();
+        EmployeeVO responseEmployeeVO = EmployeeVO.builder().id(uuid).name("Amsidh Lokhande Updated").email("amsidh-updated@gmail.com").build();
+
+        Mockito.when(employeeService.updateEmployee(ArgumentMatchers.any(UUID.class),ArgumentMatchers.any(Mono.class))).thenReturn(Mono.just(responseEmployeeVO));
+        //CSRF Token has been associated to this client. So using webClient.mutateWith(csrf())
+        webClient.mutateWith(csrf()).put().uri("/employees/{employeeId}", uuid)
+                .header("Authorization", "Basic " + Base64Utils
+                        .encodeToString(("user" + ":" + "password").getBytes(StandardCharsets.UTF_8)))
+                .body(BodyInserters.fromValue(requestEmployeeVO))
+                .exchange()
+                .expectStatus().isOk().expectBody(EmployeeVO.class)
+        .value(empVO->{
+            Assertions.assertEquals(empVO.getEmail(),responseEmployeeVO.getEmail());
+            Assertions.assertEquals(empVO.getName(),responseEmployeeVO.getName());
+        });
+        Mockito.verify(employeeService, Mockito.times(1)).updateEmployee(ArgumentMatchers.any(UUID.class),ArgumentMatchers.any(Mono.class));
     }
 
 }

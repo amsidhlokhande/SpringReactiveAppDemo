@@ -1,5 +1,6 @@
 package com.amsidh.mvc.springreactiveapp.controller;
 
+import com.amsidh.mvc.springreactiveapp.exception.BadRequestException;
 import com.amsidh.mvc.springreactiveapp.exception.EmployeeNotFoundException;
 import com.amsidh.mvc.springreactiveapp.exception.EmployeeUpdateException;
 import com.amsidh.mvc.springreactiveapp.exception.NoDataFoundException;
@@ -37,6 +38,13 @@ public class EmployeeControllerAdvice {
     @ExceptionHandler(EmployeeUpdateException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public String employeeNotDataFoundException(EmployeeUpdateException ex) {
+        logToConsole(ex);
+        return ex.getMessage();
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String employeeNotDataFoundException(BadRequestException ex) {
         logToConsole(ex);
         return ex.getMessage();
     }
