@@ -1,5 +1,6 @@
 package com.amsidh.mvc.springreactiveapp.controller;
 
+import com.amsidh.mvc.springreactiveapp.model.EmployeePageList;
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -17,7 +18,10 @@ import reactor.core.scheduler.Schedulers;
 import reactor.netty.http.client.HttpClient;
 import reactor.test.StepVerifier;
 
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.util.Base64Utils.encodeToString;
@@ -40,18 +44,23 @@ public class WebClientIT {
 
     @Test
     public void testGetEmployeeById() throws InterruptedException {
-        Flux<EmployeeVO> employeeVOFlux = webClient.get().uri("/employees").accept(MediaType.APPLICATION_JSON).retrieve().bodyToFlux(EmployeeVO.class);
-        EmployeeVO employeeVO = employeeVOFlux.publishOn(Schedulers.parallel()).blockFirst();
-        assert employeeVO != null;
-        log.info(employeeVO.toString());
-
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Mono<EmployeeVO> employeeVOMono = webClient.get().uri("/employees/{employeeId}", employeeVO.getId()).accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(EmployeeVO.class);
+        AtomicReference<EmployeeVO> employeeVOAtomicReference = new AtomicReference<>();
+        Flux<EmployeeVO> employeeVOFlux = webClient.get().uri("/employees").accept(MediaType.APPLICATION_JSON).retrieve().bodyToFlux(EmployeeVO.class);
+        employeeVOFlux.subscribe(employeeVO -> {
+            employeeVOAtomicReference.set(employeeVO);
+            log.info(employeeVO.toString());
+            countDownLatch.countDown();
+        });
+
+        countDownLatch.await();
+
+        Mono<EmployeeVO> employeeVOMono = webClient.get().uri("/employees/{employeeId}", employeeVOAtomicReference.get().getId()).accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(EmployeeVO.class);
         employeeVOMono.publishOn(Schedulers.parallel()).subscribe(empVO -> {
             Assertions.assertNotNull(empVO);
-            Assertions.assertEquals(empVO.getName(), employeeVO.getName());
-            Assertions.assertEquals(empVO.getEmail(), employeeVO.getEmail());
-            Assertions.assertEquals(empVO.getId(), employeeVO.getId());
+            Assertions.assertEquals(empVO.getName(), employeeVOAtomicReference.get().getName());
+            Assertions.assertEquals(empVO.getEmail(), employeeVOAtomicReference.get().getEmail());
+            Assertions.assertEquals(empVO.getId(), employeeVOAtomicReference.get().getId());
             countDownLatch.countDown();
         });
         countDownLatch.await();
@@ -63,6 +72,7 @@ public class WebClientIT {
         Flux<EmployeeVO> employeeVOFlux = webClient.get().uri("/employees").accept(MediaType.APPLICATION_JSON).retrieve().bodyToFlux(EmployeeVO.class);
         employeeVOFlux.publishOn(Schedulers.parallel()).subscribe(employeeVO -> {
             log.info(employeeVO.toString());
+            Assertions.assertNotNull(employeeVO);
             countDownLatch.countDown();
         });
         countDownLatch.await();
@@ -94,8 +104,10 @@ public class WebClientIT {
     }
 
     @Test
-    public void testDeleteEmployee() {
+    public void testDeleteEmployee() throws InterruptedException {
         //First Save the Employee
+        AtomicReference<UUID> uuid = new AtomicReference<>();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
         Mono<EmployeeVO> employeeVOMono = webClient.post().uri("/employees")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON).body(BodyInserters
@@ -106,18 +118,26 @@ public class WebClientIT {
                         ))
                 .retrieve()
                 .bodyToMono(EmployeeVO.class);
-        EmployeeVO employeeVO = employeeVOMono.block();
+        employeeVOMono.subscribe(employeeVO -> {
+            Assertions.assertNotNull(employeeVO);
+            uuid.set(employeeVO.getId());
+            countDownLatch.countDown();
+        });
+        countDownLatch.await();
         //After Saving new Employee you can delete the same
-        assert employeeVO != null;
-        Mono<Void> deleteVoid = webClient.delete().uri("/employees/{employeeId}", employeeVO.getId())
+
+        Mono<Void> deleteVoid = webClient.delete().uri("/employees/{employeeId}", uuid)
                 .retrieve()
                 .bodyToMono(Void.class);
         StepVerifier.create(deleteVoid).expectNextCount(0).verifyComplete();
     }
 
     @Test
-    public void testPostEmployee() {
+    public void testPostEmployee() throws InterruptedException {
         //Save Employee
+        AtomicReference<EmployeeVO> employeeVOAtomicReference = new AtomicReference<>();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
         Mono<EmployeeVO> employeeVOMono = webClient.post().uri("/employees")
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON).body(BodyInserters
@@ -129,26 +149,110 @@ public class WebClientIT {
                 .retrieve()
                 .bodyToMono(EmployeeVO.class);
 
-        EmployeeVO employeeVO = employeeVOMono.block();
-
+        employeeVOMono.subscribe(employeeVO -> {
+            employeeVOAtomicReference.set(employeeVO);
+            countDownLatch.countDown();
+        });
+        countDownLatch.await();
         //Update Employee
         EmployeeVO updatingEmployeeVO = EmployeeVO.builder().name("InitialName Updated").email("initialupdate@gmail.com").build();
 
-        assert employeeVO != null;
-        Mono<EmployeeVO> updatedEmployeeVOMono = webClient.put().uri("/employees/{employeeId}", employeeVO.getId())
+        Mono<EmployeeVO> updatedEmployeeVOMono = webClient.put().uri("/employees/{employeeId}", employeeVOAtomicReference.get().getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON).body(BodyInserters
                         .fromValue(updatingEmployeeVO))
                 .retrieve()
                 .bodyToMono(EmployeeVO.class);
         updatedEmployeeVOMono.subscribe(empVO -> {
-            Assertions.assertNotNull(employeeVO);
+            Assertions.assertNotNull(empVO);
             Assertions.assertTrue(empVO.getName().equalsIgnoreCase("InitialName Updated"));
             Assertions.assertTrue(empVO.getEmail().equalsIgnoreCase("initialupdate@gmail.com"));
-            Assertions.assertEquals(empVO.getId(), employeeVO.getId());
+            Assertions.assertEquals(empVO.getId(), employeeVOAtomicReference.get().getId());
+            countDownLatch.countDown();
         });
+        countDownLatch.await();
 
     }
 
+    @Test
+    public void testGetEmployeesPaginationDefault() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<EmployeePageList> employeePageListAtomicReference = new AtomicReference<>();
+        Mono<EmployeePageList> employeeVOFlux = webClient.get().uri("/employees/pagination").accept(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(EmployeePageList.class);
+        employeeVOFlux.publishOn(Schedulers.parallel()).subscribe(employeePageList -> {
+            employeePageListAtomicReference.set(employeePageList);
+            countDownLatch.countDown();
+        });
+        countDownLatch.await();
+        Assertions.assertEquals(employeePageListAtomicReference.get().stream().count(), 10);
+    }
 
+    @Test
+    public void testGetEmployeesPaginationWithCustomPageSizeAndNumber() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<EmployeePageList> employeePageListAtomicReference = new AtomicReference<>();
+        Mono<EmployeePageList> employeeVOFlux = webClient.get().uri(uriBuilder -> uriBuilder.path("/employees/pagination")
+                .queryParamIfPresent("pageNumber", Optional.of(2))
+                .queryParamIfPresent("pageSize", Optional.of(20))
+                .build()).accept(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(EmployeePageList.class);
+        employeeVOFlux.publishOn(Schedulers.parallel()).subscribe(employeePageList -> {
+            employeePageListAtomicReference.set(employeePageList);
+            countDownLatch.countDown();
+        });
+        countDownLatch.await();
+        Assertions.assertEquals(employeePageListAtomicReference.get().stream().count(), 20);
+    }
+
+    @Test
+    public void testGetEmployeesPaginationWithEmployeeName() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<EmployeePageList> employeePageListAtomicReference = new AtomicReference<>();
+        Mono<EmployeePageList> employeeVOFlux = webClient.get().uri(uriBuilder -> uriBuilder.path("/employees/pagination").queryParamIfPresent("name", Optional.of("Amsidh Lokhande")).build()).accept(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(EmployeePageList.class);
+        employeeVOFlux.publishOn(Schedulers.parallel()).subscribe(employeePageList -> {
+            employeePageListAtomicReference.set(employeePageList);
+            countDownLatch.countDown();
+        });
+        countDownLatch.await();
+        Assertions.assertEquals(employeePageListAtomicReference.get().stream().count(), 10);
+
+    }
+
+    @Test
+    public void testGetEmployeesPaginationWithEmployeeEmail() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<EmployeePageList> employeePageListAtomicReference = new AtomicReference<>();
+        Mono<EmployeePageList> employeeVOFlux = webClient.get().uri(uriBuilder -> uriBuilder
+                .path("/employees/pagination")
+                .queryParamIfPresent("email", Optional.of("amsidh@gmail.com")).build()).accept(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(EmployeePageList.class);
+        employeeVOFlux.publishOn(Schedulers.parallel()).subscribe(employeePageList -> {
+            employeePageListAtomicReference.set(employeePageList);
+            countDownLatch.countDown();
+        });
+        countDownLatch.await();
+        Assertions.assertEquals(employeePageListAtomicReference.get().stream().count(), 10);
+
+    }
+
+    @Test
+    public void testGetEmployeesPaginationWithEmployeeNameAndEmail() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<EmployeePageList> employeePageListAtomicReference = new AtomicReference<>();
+        Mono<EmployeePageList> employeeVOFlux = webClient.get().uri(uriBuilder -> uriBuilder
+                .path("/employees/pagination")
+                .queryParamIfPresent("name", Optional.of("Amsidh Lokhande"))
+                .queryParamIfPresent("email", Optional.of("amsidh@gmail.com"))
+                .build()).accept(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(EmployeePageList.class);
+        employeeVOFlux.publishOn(Schedulers.parallel()).subscribe(employeePageList -> {
+            employeePageListAtomicReference.set(employeePageList);
+            countDownLatch.countDown();
+        });
+        countDownLatch.await();
+        Assertions.assertEquals(employeePageListAtomicReference.get().stream().count(), 10);
+
+    }
 }
