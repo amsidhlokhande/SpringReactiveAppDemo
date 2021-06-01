@@ -84,7 +84,7 @@ class EmployeeServiceImplTest {
         Mockito.when(employeeRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Mono.empty());
         Mono<EmployeeVO> employeeVOMono = employeeService.getEmployee(uuid);
         EmployeeVO block = employeeVOMono.block();
-        Assertions.assertNull(block);
+        Assertions.assertNull(block.getId());
     }
 
 

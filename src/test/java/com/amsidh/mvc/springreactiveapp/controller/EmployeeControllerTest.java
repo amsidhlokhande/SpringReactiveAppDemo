@@ -42,11 +42,17 @@ public class EmployeeControllerTest {
 
     @Test
     public void testGetEmployeeById() {
-        final EmployeeVO employeeVO = EmployeeVO.builder().name("Amsidh").email("amsidhlokhande@gmail.com").build();
+        UUID uuid = UUID.randomUUID();
+        final EmployeeVO employeeVO = EmployeeVO.builder()
+                .id(uuid)
+                .name("Amsidh")
+                .email("amsidhlokhande@gmail.com")
+                .build();
 
         Mockito.when(employeeService.getEmployee(ArgumentMatchers.any(UUID.class)))
                 .thenReturn(Mono.just(employeeVO));
-        webClient.get().uri("/employees/{employeeId}", UUID.randomUUID())
+
+        webClient.get().uri("/employees/{employeeId}", uuid)
                 .header("Authorization", "Basic " + Base64Utils
                         .encodeToString(("user" + ":" + "password").getBytes(StandardCharsets.UTF_8)))
                 .exchange()
