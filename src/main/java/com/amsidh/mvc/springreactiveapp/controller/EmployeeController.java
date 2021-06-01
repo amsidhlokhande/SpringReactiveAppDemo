@@ -1,5 +1,6 @@
 package com.amsidh.mvc.springreactiveapp.controller;
 
+import com.amsidh.mvc.springreactiveapp.exception.EmployeeNotFoundException;
 import com.amsidh.mvc.springreactiveapp.model.EmployeePageList;
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
@@ -26,7 +27,9 @@ public class EmployeeController {
 
     @GetMapping("/{employeeId}")
     public Mono<EmployeeVO> findEmployeeById(@PathVariable("employeeId") UUID employeeId) {
-        return employeeService.getEmployee(employeeId);
+        return employeeService.getEmployee(employeeId).doOnNext(employeeVO -> {
+            if (employeeVO.getId() == null) throw new EmployeeNotFoundException(employeeId);
+        });
     }
 
     @PostMapping
@@ -36,11 +39,13 @@ public class EmployeeController {
 
     @PutMapping("/{employeeId}")
     public Mono<EmployeeVO> updateEmployeeById(@PathVariable("employeeId") UUID employeeId, @RequestBody Mono<EmployeeVO> monoEmployeeVO) {
+        log.info("EmployeeController updateEmployeeById method called");
         return employeeService.updateEmployee(employeeId, monoEmployeeVO);
     }
 
     @DeleteMapping("/{employeeId}")
     public Mono<Void> deleteEmployeeById(@PathVariable("employeeId") UUID employeeId) {
+        log.info("EmployeeController deleteEmployeeById method called");
         return employeeService.deleteEmployee(employeeId);
     }
 
@@ -51,7 +56,6 @@ public class EmployeeController {
                                                     @RequestParam(value = "email", required = false, defaultValue = "") String email,
                                                     @RequestParam(value = "pageNumber", defaultValue = "1") Integer pageNumber,
                                                     @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
-        Mono<EmployeePageList> employeePaging = employeeService.getEmployeePaging(name, email, PageRequest.of(pageNumber, pageSize));
-        return employeePaging;
+        return employeeService.getEmployeePaging(name, email, PageRequest.of(pageNumber, pageSize));
     }
 }

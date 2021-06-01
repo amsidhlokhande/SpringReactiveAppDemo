@@ -133,7 +133,7 @@ public class WebClientIT {
     }
 
     @Test
-    public void testPostEmployee() throws InterruptedException {
+    public void testUpdateEmployee() throws InterruptedException {
         //Save Employee
         AtomicReference<EmployeeVO> employeeVOAtomicReference = new AtomicReference<>();
         CountDownLatch countDownLatch = new CountDownLatch(1);

@@ -45,11 +45,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Mono<EmployeeVO> getEmployee(UUID id) {
-        return employeeRepository.findById(id).map(employee -> objectMapper.convertValue(employee, EmployeeVO.class));
+        return employeeRepository.findById(id).defaultIfEmpty(Employee.builder().build()).map(employee -> objectMapper.convertValue(employee, EmployeeVO.class));
     }
 
     @Override
     public Mono<EmployeeVO> updateEmployee(UUID id, Mono<EmployeeVO> monoEmployeeVO) {
+        log.info("EmployeeServiceImpl updateEmployee method called");
         return this.employeeRepository.findById(id)
                 .flatMap(employee -> monoEmployeeVO.map(inputEmployee -> {
                     Optional.ofNullable(inputEmployee.getName()).ifPresent(employee::setName);
