@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @Slf4j
-@RestController
+//@RestController
 @RequestMapping("/employees")
 public class EmployeeController {
     private final EmployeeService employeeService;
