@@ -5,7 +5,6 @@ import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.HandlerFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -35,7 +34,7 @@ public class EmployeeHandler {
     }
 
     public HandlerFunction<ServerResponse> updateEmployee() {
-        log.info("EmployeeHandler findEmployeeById method called");
+        log.info("EmployeeHandler updateEmployee method called");
         return serverRequest -> ServerResponse
                 .ok()
                 .body(employeeService.updateEmployee(UUID
@@ -45,7 +44,7 @@ public class EmployeeHandler {
     }
 
     public HandlerFunction<ServerResponse> deleteEmployeeById() {
-        log.info("EmployeeHandler findEmployeeById method called");
+        log.info("EmployeeHandler deleteEmployeeById method called");
         return serverRequest -> ServerResponse.ok().body(employeeService.deleteEmployee(UUID
                 .fromString(serverRequest.pathVariable("employeeId"))), Void.class);
     }
@@ -53,8 +52,7 @@ public class EmployeeHandler {
     public HandlerFunction<ServerResponse> getEmployeeByPagination() {
         log.info("EmployeeHandler getEmployeeByPagination method called");
         return serverRequest -> ServerResponse.ok().body(employeeService.getEmployeePaging(
-                serverRequest.queryParam("name").orElse(""), serverRequest.queryParam("email").orElse(""), PageRequest.of(
-                        Integer.parseInt(serverRequest.queryParam("pageNumber").orElse("0")), Integer.parseInt(serverRequest.queryParam("pageSize").orElse("20")))
-        ), EmployeePageList.class);
+                serverRequest.queryParam("name").orElse(""), serverRequest.queryParam("email").orElse(""),
+                Integer.parseInt(serverRequest.queryParam("pageNumber").orElse("0")), Integer.parseInt(serverRequest.queryParam("pageSize").orElse("20"))), EmployeePageList.class);
     }
 }

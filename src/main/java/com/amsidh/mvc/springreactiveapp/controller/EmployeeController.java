@@ -6,7 +6,6 @@ import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -15,7 +14,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @Slf4j
-//@RestController
+@RestController
 @RequestMapping("/employees")
 public class EmployeeController {
     private final EmployeeService employeeService;
@@ -56,6 +55,6 @@ public class EmployeeController {
                                                     @RequestParam(value = "email", required = false, defaultValue = "") String email,
                                                     @RequestParam(value = "pageNumber", defaultValue = "1") Integer pageNumber,
                                                     @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
-        return employeeService.getEmployeePaging(name, email, PageRequest.of(pageNumber, pageSize));
+        return employeeService.getEmployeePaging(name, email, pageNumber, pageSize);
     }
 }

@@ -17,7 +17,6 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
@@ -84,7 +83,7 @@ class EmployeeServiceImplTest {
         Mockito.when(employeeRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Mono.empty());
         Mono<EmployeeVO> employeeVOMono = employeeService.getEmployee(uuid);
         EmployeeVO block = employeeVOMono.block();
-        Assertions.assertNull(block.getId());
+        Assertions.assertNull(Objects.requireNonNull(block).getId());
     }
 
 
@@ -168,7 +167,7 @@ class EmployeeServiceImplTest {
                 .thenReturn(Flux.fromIterable(employees));
 
         Mono<EmployeePageList> employeePageListMono = employeeService.
-                getEmployeePaging("Amsidh Lokhande", "amsidh@gmail.com", PageRequest.of(1, 10));
+                getEmployeePaging("Amsidh Lokhande", "amsidh@gmail.com", 1, 10);
         EmployeePageList employeePageList = employeePageListMono.block();
         Assertions.assertNotNull(employeePageList);
 

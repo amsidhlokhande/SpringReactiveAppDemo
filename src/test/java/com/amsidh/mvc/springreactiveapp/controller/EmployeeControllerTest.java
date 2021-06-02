@@ -179,7 +179,7 @@ public class EmployeeControllerTest {
         Mockito.when(employeeService.getEmployeePaging(
                 ArgumentMatchers.any(String.class),
                 ArgumentMatchers.any(String.class),
-                ArgumentMatchers.any(PageRequest.class)))
+                ArgumentMatchers.any(Integer.class), ArgumentMatchers.any(Integer.class)))
                 .thenReturn(Mono.just(employeeVOS));
 
         //CSRF Token has been associated to this client. So using webClient.mutateWith(csrf())
@@ -190,7 +190,7 @@ public class EmployeeControllerTest {
                 .expectStatus().isOk().expectBody(EmployeePageList.class)
                 .value(employeePageList -> Optional.ofNullable(employeePageList).ifPresent(empList -> Assertions.assertFalse(empList.isEmpty())));
         Mockito.verify(employeeService, Mockito.times(1))
-                .getEmployeePaging(ArgumentMatchers.any(String.class), ArgumentMatchers.any(String.class), ArgumentMatchers.any(PageRequest.class));
+                .getEmployeePaging(ArgumentMatchers.any(String.class), ArgumentMatchers.any(String.class), ArgumentMatchers.any(Integer.class), ArgumentMatchers.any(Integer.class));
     }
 
     @Test
@@ -208,7 +208,7 @@ public class EmployeeControllerTest {
         Mockito.when(employeeService.getEmployeePaging(
                 ArgumentMatchers.any(String.class),
                 ArgumentMatchers.any(String.class),
-                ArgumentMatchers.any(PageRequest.class)))
+                ArgumentMatchers.any(Integer.class), ArgumentMatchers.any(Integer.class)))
                 .thenReturn(Mono.just(employeeVOS));
 
         //CSRF Token has been associated to this client. So using webClient.mutateWith(csrf())
@@ -223,7 +223,7 @@ public class EmployeeControllerTest {
                     empList.forEach(employeeVO -> Assertions.assertTrue(employeeVO.getEmail().equalsIgnoreCase(email)));
                 }));
         Mockito.verify(employeeService, Mockito.times(1))
-                .getEmployeePaging(ArgumentMatchers.any(String.class), ArgumentMatchers.any(String.class), ArgumentMatchers.any(PageRequest.class));
+                .getEmployeePaging(ArgumentMatchers.any(String.class), ArgumentMatchers.any(String.class), ArgumentMatchers.any(Integer.class), ArgumentMatchers.any(Integer.class));
     }
 
     private List<EmployeeVO> getEmployeeVOS() {

@@ -72,7 +72,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Mono<EmployeePageList> getEmployeePaging(String name, String email, PageRequest pageRequest) {
+    public Mono<EmployeePageList> getEmployeePaging(String name, String email, Integer pageNumber, Integer pageSize) {
         Query query = null;
         if (StringUtils.hasText(name) && StringUtils.hasText(email)) {
             query = query(where("name").is(name).and("email").is(email));
@@ -84,10 +84,12 @@ public class EmployeeServiceImpl implements EmployeeService {
             query = empty();
         }
 
+        PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
+
         return r2dbcEntityTemplate.select(Employee.class).matching(query.with(pageRequest)).all()
                 .map(employee -> objectMapper.convertValue(employee, EmployeeVO.class))
                 .collect(Collectors.toList())
-                .map(employeeVOS -> new EmployeePageList(employeeVOS, PageRequest.of(pageRequest.getPageNumber(), pageRequest.getPageSize()), employeeVOS.size()));
+                .map(employeeVOS -> new EmployeePageList(employeeVOS, pageRequest, employeeVOS.size()));
 
     }
 
