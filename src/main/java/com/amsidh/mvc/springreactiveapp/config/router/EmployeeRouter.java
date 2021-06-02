@@ -1,16 +1,16 @@
 package com.amsidh.mvc.springreactiveapp.config.router;
 
 import com.amsidh.mvc.springreactiveapp.handler.EmployeeHandler;
-import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.webflux.core.fn.SpringdocRouteBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.MediaType;
-import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.web.reactive.function.server.RequestPredicates.accept;
 
 @AllArgsConstructor
 @Slf4j
@@ -18,20 +18,26 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 public class EmployeeRouter {
 
     private static final String EMPLOYEE_BASE_URL = "/employees";
-    private static final String EMPLOYEE_BY_EMPLOYEE_ID_URL = "/employees/{employeeId}";
-
     @Bean
     public RouterFunction<ServerResponse> employeeRoute(EmployeeHandler employeeHandler) {
-        return SpringdocRouteBuilder.route()
-                .GET(EMPLOYEE_BASE_URL, RequestPredicates.accept(MediaType.APPLICATION_JSON)
-                        .and(RequestPredicates.contentType(MediaType.APPLICATION_JSON)), employeeHandler.findAllEmployees(), builder -> {
+
+        return RouterFunctions.route().path(EMPLOYEE_BASE_URL, builder ->
+                builder.GET("/pagination", employeeHandler.getEmployeeByPagination())
+                        .GET("/{employeeId}", employeeHandler.findEmployeeById())
+                        .GET(accept(APPLICATION_JSON), employeeHandler.findAllEmployees())
+                        .DELETE("/{employeeId}", employeeHandler.deleteEmployeeById())
+                        .POST(employeeHandler.postEmployee())
+                        .PUT("/{employeeId}", employeeHandler.updateEmployee())
+        ).build();
+
+
+       /* return SpringdocRouteBuilder.route()
+                .GET(EMPLOYEE_BASE_URL, employeeHandler.findAllEmployees(), builder -> {
                     builder.beanClass(EmployeeService.class).beanMethod("getEmployees");
                 })
                 .build()
                 .and(SpringdocRouteBuilder.route()
-                        .GET(EMPLOYEE_BY_EMPLOYEE_ID_URL, RequestPredicates.accept(MediaType.APPLICATION_JSON)
-                                        .and(RequestPredicates.contentType(MediaType.APPLICATION_JSON)),
-                                employeeHandler.findEmployeeById(),
+                        .GET(EMPLOYEE_BY_EMPLOYEE_ID_URL, employeeHandler.findEmployeeById(),
                                 builder -> {
                                     builder.beanClass(EmployeeService.class).beanMethod("getEmployee").build();
                                 })
@@ -45,22 +51,24 @@ public class EmployeeRouter {
                                 })
                         .build())
                 .and(SpringdocRouteBuilder.route()
-                        .DELETE(EMPLOYEE_BASE_URL, RequestPredicates.accept(MediaType.APPLICATION_JSON)
-                                        .and(RequestPredicates.contentType(MediaType.APPLICATION_JSON)),
-                                employeeHandler.deleteEmployeeById(),
+                        .DELETE(EMPLOYEE_BY_EMPLOYEE_ID_URL, employeeHandler.deleteEmployeeById(),
                                 builder -> {
                                     builder.beanClass(EmployeeService.class).beanMethod("deleteEmployee").build();
                                 })
                         .build())
                 .and(SpringdocRouteBuilder.route()
-                        .PUT(EMPLOYEE_BASE_URL, RequestPredicates.accept(MediaType.APPLICATION_JSON)
+                        .PUT(EMPLOYEE_BY_EMPLOYEE_ID_URL, RequestPredicates.accept(MediaType.APPLICATION_JSON)
                                         .and(RequestPredicates.contentType(MediaType.APPLICATION_JSON)),
                                 employeeHandler.updateEmployee(),
                                 builder -> {
                                     builder.beanClass(EmployeeService.class).beanMethod("updateEmployee").build();
                                 })
-                        .build());
-
-
+                        .build())
+                .and(SpringdocRouteBuilder.route()
+                        .GET(EMPLOYEE_PAGINATE_URL, employeeHandler.getEmployeeByPagination(),
+                                builder -> {
+                                    builder.beanClass(EmployeeService.class).beanMethod("getEmployeePaging").build();
+                                })
+                        .build());*/
     }
 }

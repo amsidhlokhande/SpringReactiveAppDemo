@@ -1,10 +1,11 @@
 package com.amsidh.mvc.springreactiveapp.handler;
 
+import com.amsidh.mvc.springreactiveapp.model.EmployeePageList;
 import com.amsidh.mvc.springreactiveapp.model.EmployeeVO;
 import com.amsidh.mvc.springreactiveapp.service.EmployeeService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.HandlerFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -25,7 +26,7 @@ public class EmployeeHandler {
         return new HandlerFunction<ServerResponse>() {
             @Override
             public Mono<ServerResponse> handle(ServerRequest serverRequest) {
-                return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(employeeService.getEmployees(), EmployeeVO.class);
+                return ServerResponse.ok().body(employeeService.getEmployees(), EmployeeVO.class);
             }
         };
     }
@@ -78,5 +79,16 @@ public class EmployeeHandler {
         };
     }
 
-
+    public HandlerFunction<ServerResponse> getEmployeeByPagination() {
+        log.info("EmployeeHandler getEmployeeByPagination method called");
+        return new HandlerFunction<ServerResponse>() {
+            @Override
+            public Mono<ServerResponse> handle(ServerRequest serverRequest) {
+                return ServerResponse.ok().body(employeeService.getEmployeePaging(
+                        serverRequest.queryParam("name").orElse(""), serverRequest.queryParam("email").orElse(""), PageRequest.of(
+                                Integer.parseInt(serverRequest.queryParam("pageNumber").orElse("0")), Integer.parseInt(serverRequest.queryParam("pageSize").orElse("20")))
+                ), EmployeePageList.class);
+            }
+        };
+    }
 }
